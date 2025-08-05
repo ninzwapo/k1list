@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bayranan Name List</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      margin: 0;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      background-color: #4da6ff;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+
+    th {
+      background-color: #4da6ff;
+      color: white;
+      cursor: pointer;
+    }
+
+    .paid {
+      color: green;
+      font-weight: bold;
+    }
+
+    .unpaid {
+      color: red;
+      font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+      table, th, td {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>📋 Bayranan Name List</h2>
+
+  <input type="text" id="searchInput" placeholder="🔍 Search name...">
+
+  <button onclick="exportToExcel()">📤 Export to Excel</button>
+  <button onclick="sortTable()">🔃 Sort A-Z</button>
+
+  <table id="nameTable">
+    <thead>
+      <tr>
+        <th onclick="sortTable()">NAME</th>
+        <th>STATUS</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <!-- Dynamic rows -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+  let ascending = true;
+  const data = [
+    { name: "Jendie", status: "PAID" },
+    { name: "Loyd", status: "PAID" },
+    { name: "Avin", status: "PAID" },
+    { name: "Oswen", status: "" },
+    { name: "Juday", status: "" },
+    { name: "Nino", status: "" },
+    { name: "Elaine", status: "" },
+    { name: "Chacha", status: "" },
+    { name: "Noel", status: "PAID" },
+    { name: "Erwin", status: "PAID" },
+    { name: "JJJ", status: "" },
+    { name: "Kiara", status: "PAID" },
+    { name: "Juls", status: "PAID" },
+  ];
+
+  const tableBody = document.getElementById("tableBody");
+
+  function renderTable(filteredData = data) {
+    tableBody.innerHTML = "";
+    filteredData.forEach((item, index) => {
+      const tr = document.createElement("tr");
+
+      const nameCell = document.createElement("td");
+      nameCell.textContent = item.name;
+
+      const statusCell = document.createElement("td");
+      statusCell.className = item.status === "PAID" ? "paid" : "unpaid";
+      statusCell.textContent = item.status === "PAID" ? "✅ PAID" : "❌ UNPAID";
+      statusCell.style.cursor = "pointer";
+      statusCell.onclick = () => {
+        item.status = item.status === "PAID" ? "" : "PAID";
+        renderTable(filteredData);
+      };
+
+      tr.appendChild(nameCell);
+      tr.appendChild(statusCell);
+      tableBody.appendChild(tr);
+    });
+  }
+
+  function sortTable() {
+    data.sort((a, b) => {
+      return ascending
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name);
+    });
+    ascending = !ascending;
+    renderTable();
+  }
+
+  function exportToExcel() {
+    let csv = "Name,Status\n";
+    data.forEach(row => {
+      csv += `${row.name},${row.status || "UNPAID"}\n`;
+    });
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("hidden", "");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "bayranan_list.csv");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  document.getElementById("searchInput").addEventListener("input", function () {
+    const term = this.value.toLowerCase();
+    const filtered = data.filter(item => item.name.toLowerCase().includes(term));
+    renderTable(filtered);
+  });
+
+  renderTable();
+</script>
+
+</body>
+</html>
