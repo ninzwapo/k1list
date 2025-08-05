@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bayranan Name List</title>
+  <title>Bayranan Auto Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,35 +13,18 @@
       margin: 0;
     }
 
-    h2 {
-      text-align: center;
-    }
-
     .container {
-      max-width: 500px;
+      max-width: 700px;
       margin: auto;
       background: white;
       padding: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
+    h2 {
+      text-align: center;
       margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    button {
-      padding: 10px 15px;
-      margin: 5px;
-      border: none;
-      background-color: #4da6ff;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
     }
 
     table {
@@ -61,19 +45,15 @@
       cursor: pointer;
     }
 
-    .paid {
-      color: green;
+    tfoot td {
       font-weight: bold;
-    }
-
-    .unpaid {
-      color: red;
-      font-weight: bold;
+      background: #f9f9f9;
     }
 
     @media (max-width: 600px) {
-      table, th, td {
+      th, td {
         font-size: 14px;
+        padding: 8px;
       }
     }
   </style>
@@ -81,102 +61,104 @@
 <body>
 
 <div class="container">
-  <h2>📋 Bayranan Name List</h2>
-
-  <input type="text" id="searchInput" placeholder="🔍 Search name...">
-
-  <button onclick="exportToExcel()">📤 Export to Excel</button>
-  <button onclick="sortTable()">🔃 Sort A-Z</button>
-
-  <table id="nameTable">
-    <thead>
-      <tr>
-        <th onclick="sortTable()">NAME</th>
-        <th>STATUS</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody">
-      <!-- Dynamic rows -->
-    </tbody>
-  </table>
+  <h2>📋 Bayranan Auto Viewer</h2>
+  <div id="tableContainer">Loading data...</div>
 </div>
 
 <script>
+  const fileUrl = 'https://raw.githubusercontent.com/ninzwapo/k1list/main/bayranan.xlsx';
+  let tableData = [];
+  let sortColumn = null;
   let ascending = true;
-  const data = [
-    { name: "Jendie", status: "PAID" },
-    { name: "Loyd", status: "PAID" },
-    { name: "Avin", status: "PAID" },
-    { name: "Oswen", status: "" },
-    { name: "Juday", status: "" },
-    { name: "Nino", status: "" },
-    { name: "Elaine", status: "" },
-    { name: "Chacha", status: "" },
-    { name: "Noel", status: "PAID" },
-    { name: "Erwin", status: "PAID" },
-    { name: "JJJ", status: "" },
-    { name: "Kiara", status: "PAID" },
-    { name: "Juls", status: "PAID" },
-  ];
 
-  const tableBody = document.getElementById("tableBody");
-
-  function renderTable(filteredData = data) {
-    tableBody.innerHTML = "";
-    filteredData.forEach((item, index) => {
-      const tr = document.createElement("tr");
-
-      const nameCell = document.createElement("td");
-      nameCell.textContent = item.name;
-
-      const statusCell = document.createElement("td");
-      statusCell.className = item.status === "PAID" ? "paid" : "unpaid";
-      statusCell.textContent = item.status === "PAID" ? "✅ PAID" : "❌ UNPAID";
-      statusCell.style.cursor = "pointer";
-      statusCell.onclick = () => {
-        item.status = item.status === "PAID" ? "" : "PAID";
-        renderTable(filteredData);
-      };
-
-      tr.appendChild(nameCell);
-      tr.appendChild(statusCell);
-      tableBody.appendChild(tr);
+  fetch(fileUrl)
+    .then(res => res.arrayBuffer())
+    .then(data => {
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      tableData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+      renderTable();
+    })
+    .catch(err => {
+      document.getElementById("tableContainer").innerHTML = `<p style="color:red;">Failed to load Excel file.</p>`;
+      console.error("Error loading Excel:", err);
     });
+
+  function renderTable() {
+    const container = document.getElementById('tableContainer');
+    container.innerHTML = "";
+
+    if (tableData.length === 0) return;
+
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const headers = Object.keys(tableData[0]);
+
+    const headerRow = document.createElement('tr');
+    headers.forEach(header => {
+      const th = document.createElement('th');
+      th.textContent = header;
+      th.addEventListener('click', () => sortTableByColumn(header));
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    tableData.forEach(row => {
+      const tr = document.createElement('tr');
+      headers.forEach(h => {
+        const td = document.createElement('td');
+        td.textContent = row[h];
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+
+    // Total row
+    const tfoot = document.createElement('tfoot');
+    const totalRow = document.createElement('tr');
+    headers.forEach(header => {
+      const td = document.createElement('td');
+      if (header.toLowerCase() === 'bayranan') {
+        const sum = tableData.reduce((acc, row) => {
+          const val = parseFloat(row[header]);
+          return acc + (isNaN(val) ? 0 : val);
+        }, 0);
+        td.textContent = `Total: ${sum}`;
+      } else {
+        td.textContent = "";
+      }
+      totalRow.appendChild(td);
+    });
+    tfoot.appendChild(totalRow);
+    table.appendChild(tfoot);
+
+    container.appendChild(table);
   }
 
-  function sortTable() {
-    data.sort((a, b) => {
-      return ascending
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name);
+  function sortTableByColumn(column) {
+    if (sortColumn === column) {
+      ascending = !ascending;
+    } else {
+      sortColumn = column;
+      ascending = true;
+    }
+
+    tableData.sort((a, b) => {
+      const valA = a[column]?.toString().toLowerCase() || "";
+      const valB = b[column]?.toString().toLowerCase() || "";
+
+      if (!isNaN(valA) && !isNaN(valB)) {
+        return ascending ? valA - valB : valB - valA;
+      }
+
+      return ascending ? valA.localeCompare(valB) : valB.localeCompare(valA);
     });
-    ascending = !ascending;
+
     renderTable();
   }
-
-  function exportToExcel() {
-    let csv = "Name,Status\n";
-    data.forEach(row => {
-      csv += `${row.name},${row.status || "UNPAID"}\n`;
-    });
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.setAttribute("hidden", "");
-    a.setAttribute("href", url);
-    a.setAttribute("download", "bayranan_list.csv");
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-
-  document.getElementById("searchInput").addEventListener("input", function () {
-    const term = this.value.toLowerCase();
-    const filtered = data.filter(item => item.name.toLowerCase().includes(term));
-    renderTable(filtered);
-  });
-
-  renderTable();
 </script>
 
 </body>
