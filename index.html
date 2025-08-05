@@ -14,7 +14,7 @@
     }
 
     .container {
-      max-width: 700px;
+      max-width: 750px;
       margin: auto;
       background: white;
       padding: 20px;
@@ -25,6 +25,16 @@
     h2 {
       text-align: center;
       margin-bottom: 15px;
+    }
+
+    button {
+      margin: 10px 0;
+      padding: 8px 16px;
+      background: #4da6ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
     }
 
     table {
@@ -47,11 +57,23 @@
 
     tfoot td {
       font-weight: bold;
-      background: #f9f9f9;
+      background: #f1f1f1;
+    }
+
+    .paid {
+      background-color: #e0fce0;
+      color: green;
+      font-weight: bold;
+    }
+
+    .unpaid {
+      background-color: #ffe0e0;
+      color: red;
+      font-weight: bold;
     }
 
     @media (max-width: 600px) {
-      th, td {
+      table, th, td {
         font-size: 14px;
         padding: 8px;
       }
@@ -62,38 +84,61 @@
 
 <div class="container">
   <h2>📋 Bayranan Auto Viewer</h2>
-  <div id="tableContainer">Loading data...</div>
+  <button onclick="exportCSV()">📤 Download Table as CSV</button>
+  <div id="tableContainer">Loading...</div>
 </div>
 
 <script>
-  const fileUrl = 'https://raw.githubusercontent.com/ninzwapo/k1list/main/bayranan.xlsx';
+  const excelUrl = 'https://raw.githubusercontent.com/ninzwapo/k1list/main/bayranan.xlsx';
+  const csvUrl = 'https://raw.githubusercontent.com/ninzwapo/k1list/main/bayranan.csv';
   let tableData = [];
   let sortColumn = null;
   let ascending = true;
 
-  fetch(fileUrl)
-    .then(res => res.arrayBuffer())
-    .then(data => {
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      tableData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-      renderTable();
-    })
-    .catch(err => {
-      document.getElementById("tableContainer").innerHTML = `<p style="color:red;">Failed to load Excel file.</p>`;
-      console.error("Error loading Excel:", err);
-    });
+  function loadExcel() {
+    fetch(excelUrl)
+      .then(res => res.arrayBuffer())
+      .then(data => {
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        tableData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        renderTable();
+      })
+      .catch(err => {
+        console.warn("Excel not found. Trying CSV...");
+        loadCSV();
+      });
+  }
+
+  function loadCSV() {
+    fetch(csvUrl)
+      .then(response => response.text())
+      .then(csv => {
+        const rows = csv.trim().split('\n').map(row => row.split(','));
+        const headers = rows[0];
+        tableData = rows.slice(1).map(row => {
+          const obj = {};
+          headers.forEach((h, i) => obj[h.trim()] = row[i]?.trim() || "");
+          return obj;
+        });
+        renderTable();
+      })
+      .catch(err => {
+        document.getElementById("tableContainer").innerHTML = `<p style="color:red;">❌ No Excel or CSV file found in the repo.</p>`;
+        console.error("Failed to load CSV:", err);
+      });
+  }
 
   function renderTable() {
     const container = document.getElementById('tableContainer');
     container.innerHTML = "";
 
-    if (tableData.length === 0) return;
+    if (!tableData.length) return;
 
-    const table = document.createElement('table');
-    const thead = document.createElement('thead');
     const headers = Object.keys(tableData[0]);
+    const table = document.createElement('table');
 
+    const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
     headers.forEach(header => {
       const th = document.createElement('th');
@@ -110,20 +155,22 @@
       headers.forEach(h => {
         const td = document.createElement('td');
         td.textContent = row[h];
+        if (h.toLowerCase() === "status") {
+          td.className = row[h].toLowerCase() === "paid" ? "paid" : "unpaid";
+        }
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
 
-    // Total row
     const tfoot = document.createElement('tfoot');
     const totalRow = document.createElement('tr');
-    headers.forEach(header => {
+    headers.forEach(h => {
       const td = document.createElement('td');
-      if (header.toLowerCase() === 'bayranan') {
+      if (h.toLowerCase() === "bayranan") {
         const sum = tableData.reduce((acc, row) => {
-          const val = parseFloat(row[header]);
+          const val = parseFloat(row[h]);
           return acc + (isNaN(val) ? 0 : val);
         }, 0);
         td.textContent = `Total: ${sum}`;
@@ -147,8 +194,8 @@
     }
 
     tableData.sort((a, b) => {
-      const valA = a[column]?.toString().toLowerCase() || "";
-      const valB = b[column]?.toString().toLowerCase() || "";
+      const valA = a[column]?.toLowerCase?.() || "";
+      const valB = b[column]?.toLowerCase?.() || "";
 
       if (!isNaN(valA) && !isNaN(valB)) {
         return ascending ? valA - valB : valB - valA;
@@ -159,6 +206,27 @@
 
     renderTable();
   }
+
+  function exportCSV() {
+    if (!tableData.length) return;
+    const headers = Object.keys(tableData[0]);
+    let csv = headers.join(",") + "\n";
+    tableData.forEach(row => {
+      const line = headers.map(h => `"${row[h] || ""}"`).join(",");
+      csv += line + "\n";
+    });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.setAttribute("href", url);
+    a.setAttribute("download", "bayranan_export.csv");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  loadExcel(); // auto-start
 </script>
 
 </body>
