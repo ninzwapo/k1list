@@ -2,62 +2,73 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Bayranan Mini App</title>
+  <title>Bayranan Names</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f4f4f4;
       padding: 20px;
     }
+
     h2 {
       text-align: center;
+      color: #333;
     }
+
     table {
-      width: 300px;
+      width: 90%;
+      max-width: 400px;
       margin: auto;
       border-collapse: collapse;
       background: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
     }
+
     th, td {
-      padding: 10px;
+      padding: 12px;
       border: 1px solid #ccc;
       text-align: center;
     }
+
     th {
       background-color: #4da6ff;
       color: white;
+    }
+
+    @media (max-width: 500px) {
+      table {
+        font-size: 14px;
+      }
     }
   </style>
 </head>
 <body>
 
-<h2>Bayranan List</h2>
+  <h2>📋 Bayranan Name List</h2>
 
-<table>
-  <thead>
-    <tr>
-      <th>NAME</th>
-      <th>BAYRANAN</th>
-      <th>STATUS</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td>Jendie</td><td>692</td><td>PAID</td></tr>
-    <tr><td>Loyd</td><td>692</td><td>PAID</td></tr>
-    <tr><td>Avin</td><td>692</td><td>PAID</td></tr>
-    <tr><td>Oswen</td><td></td><td></td></tr>
-    <tr><td>Juday</td><td></td><td></td></tr>
-    <tr><td>Nino</td><td></td><td></td></tr>
-    <tr><td>Elaine</td><td></td><td></td></tr>
-    <tr><td>Chacha</td><td></td><td></td></tr>
-    <tr><td>Noel</td><td>692</td><td>PAID</td></tr>
-    <tr><td>Erwin</td><td>692</td><td>PAID</td></tr>
-    <tr><td>JJJ</td><td></td><td></td></tr>
-    <tr><td>Kiara</td><td>692</td><td>PAID</td></tr>
-    <tr><td>Juls</td><td>692</td><td>PAID</td></tr>
-  </tbody>
-</table>
+  <table>
+    <thead>
+      <tr>
+        <th>NAME</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Jendie</td></tr>
+      <tr><td>Loyd</td></tr>
+      <tr><td>Avin</td></tr>
+      <tr><td>Oswen</td></tr>
+      <tr><td>Juday</td></tr>
+      <tr><td>Nino</td></tr>
+      <tr><td>Elaine</td></tr>
+      <tr><td>Chacha</td></tr>
+      <tr><td>Noel</td></tr>
+      <tr><td>Erwin</td></tr>
+      <tr><td>JJJ</td></tr>
+      <tr><td>Kiara</td></tr>
+      <tr><td>Juls</td></tr>
+    </tbody>
+  </table>
 
 </body>
 </html>
